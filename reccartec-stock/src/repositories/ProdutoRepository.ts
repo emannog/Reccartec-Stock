@@ -3,19 +3,11 @@ import { IProdutoRepository } from './IProdutoRepository';
 import { Produto } from '@prisma/client';
 
 export class ProdutoRepository implements IProdutoRepository {
-  async create(data: {
-    nome: string;
-    descricao?: string;
-    sku: string;
-    preco: number;
-    quantidade: number;
-    minimo: number;
-    categoriaId: number;
-  }): Promise<Produto> {
+  async create(data: any): Promise<Produto> {
     return prisma.produto.create({ 
       data,
       include: { categoria: true }
-    });
+    }) as any;
   }
 
   async findById(id: number): Promise<Produto | null> {
@@ -25,11 +17,11 @@ export class ProdutoRepository implements IProdutoRepository {
     });
   }
 
-  async findBySku(sku: string): Promise<Produto | null> {
+  async findByCodigo(codigo: number): Promise<Produto | null> {
     return prisma.produto.findUnique({ 
-      where: { sku },
+      where: { codigo: codigo } as any,
       include: { categoria: true }
-    });
+    }) as any;
   }
 
   async findAll(): Promise<Produto[]> {
@@ -50,11 +42,13 @@ export class ProdutoRepository implements IProdutoRepository {
   async update(id: number, data: Partial<{
     nome: string;
     descricao: string;
-    sku: string;
     preco: number;
     quantidade: number;
     minimo: number;
     categoriaId: number;
+    desconto?: number;
+    tipoDesconto?: string;
+    dataFimDesconto?: Date;
   }>): Promise<Produto> {
     return prisma.produto.update({ 
       where: { id }, 

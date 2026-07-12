@@ -20,12 +20,15 @@ model Produto {
   id          Int            @id @default(autoincrement())
   nome        String
   descricao   String?
-  sku         String         @unique
+  codigo      Int            @unique
   preco       Float
   quantidade  Int            @default(0)
   minimo      Int            @default(0)
   categoriaId Int
   categoria   Categoria      @relation(fields: [categoriaId], references: [id])
+  desconto    Float?         @default(0)
+  tipoDesconto String?       @default("percentual") // percentual ou valor
+  dataFimDesconto DateTime?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   movimentacoes Movimentacao[]
@@ -47,10 +50,13 @@ model Movimentacao {
 model Venda {
   id        Int        @id @default(autoincrement())
   total     Float
+  totalOriginal Float?
+  descontoTotal Float?
   cliente   String?
   status    String     @default("CONCLUIDA") // CONCLUIDA, CANCELADA
   createdAt DateTime   @default(now())
   itens     ItemVenda[]
+  movimentacoes Movimentacao[]
 }
 
 model ItemVenda {
@@ -60,6 +66,8 @@ model ItemVenda {
   produtoId Int
   produto   Produto  @relation(fields: [produtoId], references: [id])
   quantidade Int
+  precoOriginal Float?
   precoUnitario Float
+  descontoAplicado Float?
   subtotal   Float
 }

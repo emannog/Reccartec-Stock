@@ -5,13 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Package, Plus, Search, Edit, Trash2, ArrowDown, ArrowUp } from 'lucide-react'
+import { Package, Plus, Search, Edit, Trash2, ArrowDown, ArrowUp, Settings } from 'lucide-react'
 
 interface Produto {
   id: number
   nome: string
   descricao: string | null
-  sku: string
+  codigo: number
   preco: number
   quantidade: number
   minimo: number
@@ -19,6 +19,9 @@ interface Produto {
     id: number
     nome: string
   }
+  desconto: number | null
+  tipoDesconto: string | null
+  dataFimDesconto: string | null
 }
 
 export default function ProdutosPage() {
@@ -26,16 +29,19 @@ export default function ProdutosPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
   const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null)
   const [categorias, setCategorias] = useState<any[]>([])
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
-    sku: '',
     preco: '',
     quantidade: '',
     minimo: '',
-    categoriaId: ''
+    categoriaId: '',
+    desconto: '',
+    tipoDesconto: 'percentual',
+    dataFimDesconto: ''
   })
 
   useEffect(() => {
@@ -67,7 +73,7 @@ export default function ProdutosPage() {
 
   const filteredProdutos = produtos.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+    p.codigo.toString().includes(searchTerm.toLowerCase())
   )
 
   const handleEntrada = async (id: number) => {
@@ -115,52 +121,82 @@ export default function ProdutosPage() {
 
   const handleSave = async () => {
     try {
-      const response = await fetch('/api/produtos', {
-        method: 'POST',
+      const url = isEditing ? `/api/produtos/${selectedProduto?.id}` : '/api/produtos'
+      const method = isEditing ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           nome: formData.nome,
           descricao: formData.descricao || null,
-          sku: formData.sku,
           preco: Number(formData.preco),
           quantidade: Number(formData.quantidade),
           minimo: Number(formData.minimo),
-          categoriaId: Number(formData.categoriaId)
+          categoriaId: Number(formData.categoriaId),
+          desconto: formData.desconto ? Number(formData.desconto) : 0,
+          tipoDesconto: formData.tipoDesconto,
+          dataFimDesconto: formData.dataFimDesconto ? new Date(formData.dataFimDesconto) : null
         })
       })
       
       if (response.ok) {
         setShowModal(false)
+        setIsEditing(false)
+        setSelectedProduto(null)
         setFormData({
           nome: '',
           descricao: '',
-          sku: '',
           preco: '',
           quantidade: '',
           minimo: '',
-          categoriaId: ''
+          categoriaId: '',
+          desconto: '',
+          tipoDesconto: 'percentual',
+          dataFimDesconto: ''
         })
         fetchProdutos()
       } else {
-        alert('Erro ao criar produto')
+        alert(isEditing ? 'Erro ao editar produto' : 'Erro ao criar produto')
       }
     } catch (error) {
-      console.error('Erro ao criar produto:', error)
-      alert('Erro ao criar produto')
+      console.error('Erro ao salvar produto:', error)
+      alert(isEditing ? 'Erro ao editar produto' : 'Erro ao criar produto')
     }
   }
 
   const handleCloseModal = () => {
     setShowModal(false)
+    setIsEditing(false)
+    setSelectedProduto(null)
     setFormData({
       nome: '',
       descricao: '',
-      sku: '',
       preco: '',
       quantidade: '',
       minimo: '',
-      categoriaId: ''
+      categoriaId: '',
+      desconto: '',
+      tipoDesconto: 'percentual',
+      dataFimDesconto: ''
     })
+  }
+
+  const handleEdit = (produto: Produto) => {
+    setSelectedProduto(produto)
+    setIsEditing(true)
+    setFormData({
+      nome: produto.nome,
+      descricao: produto.descricao || '',
+      preco: produto.preco.toString(),
+      quantidade: produto.quantidade.toString(),
+      minimo: produto.minimo.toString(),
+      categoriaId: produto.categoria.id.toString(),
+      desconto: produto.desconto?.toString() || '',
+      tipoDesconto: produto.tipoDesconto || 'percentual',
+      dataFimDesconto: produto.dataFimDesconto ? produto.dataFimDesconto.slice(0, 10) : ''
+    })
+    setShowModal(true)
   }
 
   if (loading) {
@@ -168,11 +204,14 @@ export default function ProdutosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8 pt-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">Produtos</h1>
-          <Button onClick={() => setShowModal(true)} className="w-full md:w-auto">
+          <div>
+            <h1 className="text-3xl font-bold text-blue-900">Produtos</h1>
+            <p className="text-gray-600 mt-1">Gerencie seu catálogo de produtos</p>
+          </div>
+          <Button onClick={() => setShowModal(true)} className="w-full md:w-auto bg-blue-900 hover:bg-blue-800">
             <Plus className="w-4 h-4 mr-2" />
             Novo Produto
           </Button>
@@ -202,9 +241,12 @@ export default function ProdutosPage() {
                       <Package className="w-5 h-5 text-blue-600" />
                       <span className="text-lg">{produto.nome}</span>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">SKU: {produto.sku}</p>
+                    <p className="text-sm text-gray-500 mt-1">Cód: {produto.codigo}</p>
                   </div>
                   <div className="flex gap-1">
+                    <Button size="icon" variant="ghost" onClick={() => handleEdit(produto)}>
+                      <Edit className="w-4 h-4 text-blue-600" />
+                    </Button>
                     <Button size="icon" variant="ghost" onClick={() => handleEntrada(produto.id)}>
                       <ArrowDown className="w-4 h-4 text-green-600" />
                     </Button>
@@ -227,6 +269,34 @@ export default function ProdutosPage() {
                     <span className="text-gray-600">Preço:</span>
                     <span className="font-medium">R$ {produto.preco.toFixed(2)}</span>
                   </div>
+                  {produto.desconto && produto.desconto > 0 && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Desconto:</span>
+                        <span className="font-medium text-orange-600">
+                          {produto.tipoDesconto === 'percentual' 
+                            ? `${produto.desconto}%` 
+                            : `R$ ${produto.desconto.toFixed(2)}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Preço c/ desconto:</span>
+                        <span className="font-medium text-green-600">
+                          R$ {(produto.tipoDesconto === 'percentual'
+                            ? produto.preco * (1 - produto.desconto / 100)
+                            : produto.preco - produto.desconto).toFixed(2)}
+                        </span>
+                      </div>
+                      {produto.dataFimDesconto && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Desconto até:</span>
+                          <span className="font-medium text-orange-600">
+                            {new Date(produto.dataFimDesconto).toLocaleDateString('pt-BR')}
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Estoque:</span>
                     <span className={`font-medium ${produto.quantidade <= produto.minimo ? 'text-red-600' : 'text-green-600'}`}>
@@ -255,7 +325,7 @@ export default function ProdutosPage() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
               <CardHeader>
-                <CardTitle>Novo Produto</CardTitle>
+                <CardTitle>{isEditing ? 'Editar Produto' : 'Novo Produto'}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -274,15 +344,6 @@ export default function ProdutosPage() {
                     value={formData.descricao}
                     onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
                     placeholder="Descrição do produto"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="sku">SKU *</Label>
-                  <Input
-                    id="sku"
-                    value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                    placeholder="SKU do produto"
                   />
                 </div>
                 <div>
@@ -331,6 +392,47 @@ export default function ProdutosPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <Label className="text-sm font-semibold text-blue-900 mb-2 block">Configuração de Desconto</Label>
+                </div>
+                
+                <div>
+                  <Label htmlFor="tipoDesconto">Tipo de Desconto</Label>
+                  <select
+                    id="tipoDesconto"
+                    value={formData.tipoDesconto}
+                    onChange={(e) => setFormData({ ...formData, tipoDesconto: e.target.value })}
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="percentual">Percentual (%)</option>
+                    <option value="valor">Valor (R$)</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <Label htmlFor="desconto">Valor do Desconto</Label>
+                  <Input
+                    id="desconto"
+                    type="number"
+                    step={formData.tipoDesconto === 'percentual' ? '1' : '0.01'}
+                    min="0"
+                    value={formData.desconto}
+                    onChange={(e) => setFormData({ ...formData, desconto: e.target.value })}
+                    placeholder={formData.tipoDesconto === 'percentual' ? '0' : '0.00'}
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="dataFimDesconto">Data Fim do Desconto (opcional)</Label>
+                  <Input
+                    id="dataFimDesconto"
+                    type="date"
+                    value={formData.dataFimDesconto}
+                    onChange={(e) => setFormData({ ...formData, dataFimDesconto: e.target.value })}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Se não informado, o desconto será permanente</p>
                 </div>
                 <div className="flex gap-2 pt-4">
                   <Button onClick={handleSave} className="flex-1">

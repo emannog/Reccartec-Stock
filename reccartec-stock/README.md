@@ -148,15 +148,41 @@ O projeto segue uma arquitetura em camadas:
 - `id`: Identificador único
 - `nome`: Nome do produto
 - `descricao`: Descrição opcional
-- `sku`: SKU do produto (único)
+- `codigo`: Código do produto (único, auto-incremento)
 - `preco`: Preço unitário
 - `quantidade`: Quantidade em estoque
 - `minimo`: Estoque mínimo
 - `categoriaId`: ID da categoria
 - `categoria`: Relacionamento com categoria
+- `desconto`: Desconto do produto (opcional)
+- `tipoDesconto`: Tipo de desconto (percentual ou valor)
+- `dataFimDesconto`: Data fim do desconto (opcional)
 - `createdAt`: Data de criação
 - `updatedAt`: Data de atualização
 - `movimentacoes`: Relacionamento com movimentações
+- `itensVenda`: Relacionamento com itens de venda
+
+### Venda
+- `id`: Identificador único
+- `total`: Total da venda (com desconto)
+- `totalOriginal`: Total original (sem desconto)
+- `descontoTotal`: Valor total do desconto aplicado
+- `cliente`: Nome do cliente (opcional)
+- `status`: Status da venda (CONCLUIDA, CANCELADA)
+- `createdAt`: Data de criação
+- `itens`: Relacionamento com itens da venda
+- `movimentacoes`: Relacionamento com movimentações
+
+### ItemVenda
+- `id`: Identificador único
+- `vendaId`: ID da venda
+- `produtoId`: ID do produto
+- `produto`: Relacionamento com produto
+- `quantidade`: Quantidade vendida
+- `precoOriginal`: Preço original do produto
+- `precoUnitario`: Preço unitário aplicado
+- `descontoAplicado`: Desconto aplicado no item
+- `subtotal`: Subtotal do item
 
 ### Movimentacao
 - `id`: Identificador único
@@ -212,11 +238,13 @@ Cria um novo produto
 {
   "nome": "Smartphone",
   "descricao": "Smartphone XYZ",
-  "sku": "SKU001",
   "preco": 999.99,
   "quantidade": 10,
   "minimo": 5,
-  "categoriaId": 1
+  "categoriaId": 1,
+  "desconto": 20,
+  "tipoDesconto": "percentual",
+  "dataFimDesconto": "2024-12-31"
 }
 ```
 
@@ -297,6 +325,77 @@ O sistema é totalmente responsivo e funciona em:
 - Desktop (1920x1080+)
 - Tablet (768x1024)
 - Mobile (375x667+)
+
+## 📲 Acessando no Celular
+
+### Opção 1: Deploy em Plataforma Cloud (Recomendado)
+
+A melhor forma de acessar a aplicação no celular é fazer deploy em uma plataforma cloud:
+
+#### Vercel (Mais Fácil)
+1. Crie uma conta em [vercel.com](https://vercel.com)
+2. Conecte seu repositório GitHub/GitLab/Bitbucket
+3. Configure as variáveis de ambiente
+4. O deploy é automático após cada push
+5. Acesse via URL gerada (ex: `https://reccartec-stock.vercel.app`)
+
+#### Netlify
+1. Crie uma conta em [netlify.com](https://netlify.com)
+2. Conecte seu repositório
+3. Configure o build command: `npm run build`
+4. Configure o publish directory: `.next`
+5. Acesse via URL gerada
+
+#### Railway
+1. Crie uma conta em [railway.app](https://railway.app)
+2. Crie um novo projeto
+3. Conecte seu repositório
+4. Configure as variáveis de ambiente
+5. Acesse via URL gerada
+
+### Opção 2: Acesso Local (Apenas para Testes)
+
+Para acessar a aplicação localmente no celular, ambos dispositivos precisam estar na mesma rede Wi-Fi:
+
+1. **Encontre o IP do seu computador:**
+   - Windows: Abra o Prompt de Comando e digite `ipconfig`
+   - Mac/Linux: Abre o Terminal e digite `ifconfig` ou `ip addr`
+   - Procure pelo IPv4 (ex: `192.168.1.100`)
+
+2. **Inicie o servidor:**
+   ```bash
+   npm run dev
+   ```
+
+3. **Acesse no celular:**
+   - Abra o navegador no celular
+   - Digite: `http://SEU_IP:3000` (ex: `http://192.168.1.100:3000`)
+
+**Limitações do acesso local:**
+- Funciona apenas na mesma rede Wi-Fi
+- Não funciona fora de casa
+- IP pode mudar ao reiniciar o roteador
+- Não é seguro para produção
+
+### Opção 3: Tunneling (Para Testes Rápidos)
+
+Use serviços de tunneling para expor seu localhost temporariamente:
+
+#### ngrok
+1. Instale o ngrok: [ngrok.com](https://ngrok.com)
+2. Execute: `ngrok http 3000`
+3. Use a URL gerada (ex: `https://abc123.ngrok.io`)
+4. A URL muda a cada execução
+
+#### localtunnel
+```bash
+npx localtunnel --port 3000
+```
+
+**Limitações do tunneling:**
+- URL temporária
+- Não é seguro para produção
+- Pode ter limitações de banda
 
 ## 🎨 Design System
 

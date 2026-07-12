@@ -90,11 +90,14 @@ export default function CategoriasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8 pt-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">Categorias</h1>
-          <Button onClick={() => setShowModal(true)} className="w-full md:w-auto">
+          <div>
+            <h1 className="text-3xl font-bold text-blue-900">Categorias</h1>
+            <p className="text-gray-600 mt-1">Organize seus produtos por categorias</p>
+          </div>
+          <Button onClick={() => setShowModal(true)} className="w-full md:w-auto bg-blue-900 hover:bg-blue-800">
             <Plus className="w-4 h-4 mr-2" />
             Nova Categoria
           </Button>

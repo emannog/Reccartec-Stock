@@ -3,23 +3,27 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Receipt, X, Calendar, User, DollarSign, Package } from 'lucide-react'
+import { Receipt, X, Calendar, User, Package } from 'lucide-react'
 
 interface Venda {
   id: number
   total: number
+  totalOriginal: number | null
+  descontoTotal: number | null
   cliente: string | null
   status: string
   createdAt: string
   itens: {
     id: number
     quantidade: number
+    precoOriginal: number | null
     precoUnitario: number
+    descontoAplicado: number | null
     subtotal: number
     produto: {
       id: number
       nome: string
-      sku: string
+      codigo: number
     }
   }[]
 }
@@ -83,11 +87,14 @@ export default function HistoricoVendasPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-8 pt-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h1 className="text-3xl font-bold text-gray-800">Histórico de Vendas</h1>
-          <Button onClick={() => window.location.href = '/vendas'} className="w-full md:w-auto">
+          <div>
+            <h1 className="text-3xl font-bold text-blue-900">Histórico de Vendas</h1>
+            <p className="text-gray-600 mt-1">Visualize todas as vendas realizadas</p>
+          </div>
+          <Button onClick={() => window.location.href = '/'} className="w-full md:w-auto bg-blue-900 hover:bg-blue-800">
             Nova Venda
           </Button>
         </div>
@@ -106,9 +113,21 @@ export default function HistoricoVendasPage() {
                       </span>
                     </div>
                   </div>
-                  <span className="text-lg font-bold text-green-600">
-                    R$ {venda.total.toFixed(2)}
-                  </span>
+                  <div className="text-right">
+                    {venda.totalOriginal && venda.totalOriginal > venda.total && (
+                      <div className="text-sm text-gray-400 line-through">
+                        R$ {venda.totalOriginal.toFixed(2)}
+                      </div>
+                    )}
+                    <span className="text-lg font-bold text-green-600">
+                      R$ {venda.total.toFixed(2)}
+                    </span>
+                    {venda.descontoTotal && venda.descontoTotal > 0 && (
+                      <div className="text-xs text-orange-600">
+                        -R$ {venda.descontoTotal.toFixed(2)}
+                      </div>
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -181,10 +200,20 @@ export default function HistoricoVendasPage() {
                       <div key={item.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
                         <div>
                           <p className="font-medium">{item.produto.nome}</p>
-                          <p className="text-sm text-gray-500">SKU: {item.produto.sku}</p>
+                          <p className="text-sm text-gray-500">Cód: {item.produto.codigo}</p>
                         </div>
                         <div className="text-right">
+                          {item.precoOriginal && item.precoOriginal > item.precoUnitario && (
+                            <p className="text-xs text-gray-400 line-through">
+                              R$ {item.precoOriginal.toFixed(2)}
+                            </p>
+                          )}
                           <p className="text-sm">R$ {item.precoUnitario.toFixed(2)} x {item.quantidade}</p>
+                          {item.descontoAplicado && item.descontoAplicado > 0 && (
+                            <p className="text-xs text-orange-600">
+                              -R$ {item.descontoAplicado.toFixed(2)}
+                            </p>
+                          )}
                           <p className="font-medium text-green-600">R$ {item.subtotal.toFixed(2)}</p>
                         </div>
                       </div>
@@ -193,6 +222,18 @@ export default function HistoricoVendasPage() {
                 </div>
 
                 <div className="border-t pt-4">
+                  {selectedVenda.totalOriginal && selectedVenda.totalOriginal > selectedVenda.total && (
+                    <div className="flex justify-between items-center text-sm mb-2">
+                      <span className="text-gray-600">Total Original:</span>
+                      <span className="text-gray-400 line-through">R$ {selectedVenda.totalOriginal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {selectedVenda.descontoTotal && selectedVenda.descontoTotal > 0 && (
+                    <div className="flex justify-between items-center text-sm mb-2">
+                      <span className="text-gray-600">Desconto Total:</span>
+                      <span className="text-orange-600">-R$ {selectedVenda.descontoTotal.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between items-center text-lg font-bold">
                     <span>Total:</span>
                     <span className="text-green-600">R$ {selectedVenda.total.toFixed(2)}</span>

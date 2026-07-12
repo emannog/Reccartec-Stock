@@ -7,6 +7,8 @@ export interface IVendaService {
       produtoId: number;
       quantidade: number;
     }[];
+    desconto?: number;
+    tipoDesconto?: string;
   }): Promise<Venda>;
   findById(id: number): Promise<Venda | null>;
   findAll(): Promise<Venda[]>;

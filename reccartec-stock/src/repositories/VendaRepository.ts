@@ -3,26 +3,18 @@ import { prisma } from '@/lib/prisma';
 import { Venda } from '@prisma/client';
 
 export class VendaRepository implements IVendaRepository {
-  async create(data: {
-    total: number;
-    cliente?: string;
-    status?: string;
-    itens: {
-      produtoId: number;
-      quantidade: number;
-      precoUnitario: number;
-      subtotal: number;
-    }[];
-  }): Promise<Venda> {
+  async create(data: any): Promise<Venda> {
     return await prisma.venda.create({
       data: {
         total: data.total,
+        totalOriginal: data.totalOriginal,
+        descontoTotal: data.descontoTotal,
         cliente: data.cliente,
         status: data.status || 'CONCLUIDA',
         itens: {
           create: data.itens
         }
-      },
+      } as any,
       include: {
         itens: {
           include: {
@@ -30,7 +22,7 @@ export class VendaRepository implements IVendaRepository {
           }
         }
       }
-    });
+    }) as any;
   }
 
   async findById(id: number): Promise<Venda | null> {

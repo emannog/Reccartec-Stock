@@ -20,17 +20,14 @@ export class ProdutoService implements IProdutoService {
   async create(data: {
     nome: string;
     descricao?: string;
-    sku: string;
     preco: number;
     quantidade: number;
     minimo: number;
     categoriaId: number;
+    desconto?: number;
+    tipoDesconto?: string;
+    dataFimDesconto?: Date;
   }): Promise<Produto> {
-    const existingSku = await this.produtoRepository.findBySku(data.sku);
-    if (existingSku) {
-      throw new Error('Produto com este SKU já existe');
-    }
-
     if (data.preco < 0) {
       throw new Error('Preço não pode ser negativo');
     }
@@ -43,15 +40,20 @@ export class ProdutoService implements IProdutoService {
       throw new Error('Estoque mínimo não pode ser negativo');
     }
 
-    return this.produtoRepository.create(data);
+    // Gerar próximo código automaticamente
+    const produtos = await this.produtoRepository.findAll();
+    const maxCodigo = produtos.length > 0 ? Math.max(...produtos.map((p: any) => p.codigo)) : 0;
+    const nextCodigo = maxCodigo + 1;
+
+    return this.produtoRepository.create({ ...data, codigo: nextCodigo });
   }
 
   async findById(id: number): Promise<Produto | null> {
     return this.produtoRepository.findById(id);
   }
 
-  async findBySku(sku: string): Promise<Produto | null> {
-    return this.produtoRepository.findBySku(sku);
+  async findByCodigo(codigo: number): Promise<Produto | null> {
+    return this.produtoRepository.findByCodigo(codigo);
   }
 
   async findAll(): Promise<Produto[]> {
@@ -65,22 +67,17 @@ export class ProdutoService implements IProdutoService {
   async update(id: number, data: Partial<{
     nome: string;
     descricao: string;
-    sku: string;
     preco: number;
     quantidade: number;
     minimo: number;
     categoriaId: number;
+    desconto?: number;
+    tipoDesconto?: string;
+    dataFimDesconto?: Date;
   }>): Promise<Produto> {
     const produto = await this.produtoRepository.findById(id);
     if (!produto) {
       throw new Error('Produto não encontrado');
-    }
-
-    if (data.sku && data.sku !== produto.sku) {
-      const existingSku = await this.produtoRepository.findBySku(data.sku);
-      if (existingSku) {
-        throw new Error('Produto com este SKU já existe');
-      }
     }
 
     if (data.preco !== undefined && data.preco < 0) {

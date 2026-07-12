@@ -13,7 +13,7 @@ interface Movimentacao {
   produto: {
     id: number
     nome: string
-    sku: string
+    codigo: number
   }
   motivo: string | null
   createdAt: string
@@ -92,7 +92,7 @@ export default function MovimentacoesPage() {
                           {movimentacao.tipo}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500">SKU: {movimentacao.produto.sku}</p>
+                      <p className="text-sm text-gray-500">Cód: {movimentacao.produto.codigo}</p>
                       <p className="text-sm text-gray-600 mt-1">
                         Quantidade: <span className="font-medium">{movimentacao.quantidade}</span>
                       </p>

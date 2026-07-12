@@ -6,6 +6,7 @@ export interface IMovimentacaoRepository {
     quantidade: number;
     produtoId: number;
     motivo?: string;
+    vendaId?: number;
   }): Promise<Movimentacao>;
   findById(id: number): Promise<Movimentacao | null>;
   findByProduto(produtoId: number): Promise<Movimentacao[]>;

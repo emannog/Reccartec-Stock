@@ -8,6 +8,7 @@ export class MovimentacaoRepository implements IMovimentacaoRepository {
     quantidade: number;
     produtoId: number;
     motivo?: string;
+    vendaId?: number;
   }): Promise<Movimentacao> {
     return prisma.movimentacao.create({ 
       data,

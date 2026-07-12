@@ -4,17 +4,21 @@ import { VendaRepository } from '@/repositories/VendaRepository';
 import { ProdutoRepository } from '@/repositories/ProdutoRepository';
 import { MovimentacaoRepository } from '@/repositories/MovimentacaoRepository';
 
-const vendaService = new VendaService(
-  new VendaRepository(),
-  new ProdutoRepository(),
-  new MovimentacaoRepository()
-);
-
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const vendaRepository = new VendaRepository();
+    const produtoRepository = new ProdutoRepository();
+    const movimentacaoRepository = new MovimentacaoRepository();
+    
+    const vendaService = new VendaService(
+      vendaRepository,
+      produtoRepository,
+      movimentacaoRepository
+    );
+    
     const venda = await vendaService.findById(Number(params.id));
     if (!venda) {
       return NextResponse.json({ error: 'Venda não encontrada' }, { status: 404 });
@@ -31,6 +35,16 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    const vendaRepository = new VendaRepository();
+    const produtoRepository = new ProdutoRepository();
+    const movimentacaoRepository = new MovimentacaoRepository();
+    
+    const vendaService = new VendaService(
+      vendaRepository,
+      produtoRepository,
+      movimentacaoRepository
+    );
+    
     const venda = await vendaService.cancelar(Number(params.id));
     return NextResponse.json(venda);
   } catch (error: any) {

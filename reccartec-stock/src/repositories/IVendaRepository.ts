@@ -3,12 +3,16 @@ import { Venda, ItemVenda } from '@prisma/client';
 export interface IVendaRepository {
   create(data: {
     total: number;
+    totalOriginal?: number;
+    descontoTotal?: number;
     cliente?: string;
     status?: string;
     itens: {
       produtoId: number;
       quantidade: number;
+      precoOriginal?: number;
       precoUnitario: number;
+      descontoAplicado?: number;
       subtotal: number;
     }[];
   }): Promise<Venda>;
