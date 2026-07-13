@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Plus, Minus, Trash2, Search, DollarSign, Package, BarChart3, TrendingUp } from 'lucide-react'
+import { calcularPrecoComDesconto, temDescontoValido } from '@/lib/desconto'
 
 interface Produto {
   id: number
   nome: string
   descricao: string | null
-  sku: string
+  codigo: number
   preco: number
   quantidade: number
   minimo: number
@@ -44,6 +45,10 @@ export default function Home() {
     vendasHoje: 0,
     estoqueBaixo: 0
   })
+  const [errorMessage, setErrorMessage] = useState('')
+  const [showError, setShowError] = useState(false)
+  const [successMessage, setSuccessMessage] = useState('')
+  const [showSuccess, setShowSuccess] = useState(false)
 
   useEffect(() => {
     fetchProdutos()
@@ -54,9 +59,10 @@ export default function Home() {
     try {
       const response = await fetch('/api/produtos')
       const data = await response.json()
-      setProdutos(data)
+      setProdutos(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Erro ao buscar produtos:', error)
+      // Silencioso - erro será tratado pelo estado loading
+      setProdutos([])
     } finally {
       setLoading(false)
     }
@@ -68,18 +74,19 @@ export default function Home() {
       const data = await response.json()
       setStats(data)
     } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error)
+      // Silencioso - stats não são críticos
     }
   }
 
   const filteredProdutos = produtos.filter(p =>
     p.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.sku.toLowerCase().includes(searchTerm.toLowerCase())
+    p.codigo.toString().includes(searchTerm.toLowerCase())
   )
 
   const adicionarAoCarrinho = (produto: Produto) => {
     if (produto.quantidade === 0) {
-      alert('Produto sem estoque')
+      setErrorMessage('Produto sem estoque')
+      setShowError(true)
       return
     }
 
@@ -87,7 +94,8 @@ export default function Home() {
     const quantidadeNoCarrinho = itemExistente ? itemExistente.quantidade : 0
 
     if (quantidadeNoCarrinho >= produto.quantidade) {
-      alert('Estoque máximo atingido para este produto')
+      setErrorMessage('Estoque máximo atingido para este produto')
+      setShowError(true)
       return
     }
 
@@ -118,7 +126,8 @@ export default function Home() {
     }
 
     if (novaQuantidade > item.produto.quantidade) {
-      alert('Estoque máximo atingido')
+      setErrorMessage('Estoque máximo atingido')
+      setShowError(true)
       return
     }
 
@@ -131,7 +140,7 @@ export default function Home() {
 
   const getTotal = () => {
     const subtotal = carrinho.reduce((total, item) => {
-      const preco = getPrecoComDesconto(item.produto)
+      const preco = calcularPrecoComDesconto(item.produto)
       return total + (preco * item.quantidade)
     }, 0)
     
@@ -148,7 +157,7 @@ export default function Home() {
 
   const getSubtotal = () => {
     return carrinho.reduce((total, item) => {
-      const preco = getPrecoComDesconto(item.produto)
+      const preco = calcularPrecoComDesconto(item.produto)
       return total + (preco * item.quantidade)
     }, 0)
   }
@@ -166,38 +175,11 @@ export default function Home() {
     }
   }
 
-  const getPrecoComDesconto = (produto: Produto) => {
-    if (!produto.desconto || produto.desconto === 0) return produto.preco
-    
-    // Verificar se o desconto ainda é válido
-    if (produto.dataFimDesconto) {
-      const dataFim = new Date(produto.dataFimDesconto)
-      const agora = new Date()
-      if (agora > dataFim) return produto.preco
-    }
-    
-    if (produto.tipoDesconto === 'percentual') {
-      return produto.preco - (produto.preco * (produto.desconto / 100))
-    } else {
-      return produto.preco - produto.desconto
-    }
-  }
-
-  const temDescontoValido = (produto: Produto) => {
-    if (!produto.desconto || produto.desconto === 0) return false
-    
-    if (produto.dataFimDesconto) {
-      const dataFim = new Date(produto.dataFimDesconto)
-      const agora = new Date()
-      return agora <= dataFim
-    }
-    
-    return true
-  }
 
   const finalizarVenda = async () => {
     if (carrinho.length === 0) {
-      alert('Carrinho vazio')
+      setErrorMessage('Carrinho vazio')
+      setShowError(true)
       return
     }
 
@@ -216,8 +198,6 @@ export default function Home() {
         vendaData.tipoDesconto = tipoDesconto
       }
 
-      console.log('Enviando dados da venda:', vendaData);
-      
       const response = await fetch('/api/vendas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -225,7 +205,8 @@ export default function Home() {
       })
 
       if (response.ok) {
-        alert('Venda realizada com sucesso!')
+        setSuccessMessage('Venda realizada com sucesso!')
+        setShowSuccess(true)
         setCarrinho([])
         setCliente('')
         setDesconto('')
@@ -233,12 +214,12 @@ export default function Home() {
         fetchStats()
       } else {
         const error = await response.json()
-        console.error('Erro do servidor:', error)
-        alert(`Erro: ${error.error || 'Erro ao realizar venda'}`)
+        setErrorMessage(`Erro: ${error.error || 'Erro ao realizar venda'}`)
+        setShowError(true)
       }
     } catch (error) {
-      console.error('Erro ao realizar venda:', error)
-      alert('Erro ao realizar venda')
+      setErrorMessage('Erro ao realizar venda')
+      setShowError(true)
     }
   }
 
@@ -248,6 +229,60 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      {showError && (
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full">
+          <Card className="bg-red-50 border-red-200">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <div className="text-red-600 mt-0.5">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-red-800">Erro</p>
+                  <p className="text-sm text-red-700 mt-1">{errorMessage}</p>
+                </div>
+                <button
+                  onClick={() => setShowError(false)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+      {showSuccess && (
+        <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 max-w-md w-full">
+          <Card className="bg-green-50 border-green-200">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <div className="text-green-600 mt-0.5">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-green-800">Sucesso</p>
+                  <p className="text-sm text-green-700 mt-1">{successMessage}</p>
+                </div>
+                <button
+                  onClick={() => setShowSuccess(false)}
+                  className="text-green-600 hover:text-green-800"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       <div className="container mx-auto px-4 py-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto mb-8">
@@ -283,7 +318,7 @@ export default function Home() {
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <Input
-                    placeholder="Buscar por nome ou SKU..."
+                    placeholder="Buscar por nome ou código..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 h-12 text-lg"
@@ -294,15 +329,19 @@ export default function Home() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filteredProdutos.map((produto) => {
-                const precoComDesconto = getPrecoComDesconto(produto)
+                const precoComDesconto = calcularPrecoComDesconto(produto)
                 const temDesconto = temDescontoValido(produto)
                 
                 return (
-                  <Card key={produto.id} className="hover:shadow-lg transition-all cursor-pointer border border-gray-200 hover:border-blue-900" onClick={() => adicionarAoCarrinho(produto)}>
+                  <Card 
+                    key={produto.id} 
+                    className={`hover:shadow-lg transition-all cursor-pointer border hover:border-blue-900 ${produto.quantidade <= produto.minimo ? 'bg-red-50 border-red-200' : 'border-gray-200'}`} 
+                    onClick={() => adicionarAoCarrinho(produto)}
+                  >
                     <CardContent className="p-6">
                       <div className="space-y-3">
                         <h3 className="font-semibold text-base text-blue-900">{produto.nome}</h3>
-                        <p className="text-sm text-gray-500">SKU: {produto.sku}</p>
+                        <p className="text-sm text-gray-500">Cód: {produto.codigo}</p>
                         <p className="text-sm text-gray-600">{produto.categoria.nome}</p>
                         <div className="flex justify-between items-center pt-2">
                           <div className="flex flex-col">
@@ -376,7 +415,7 @@ export default function Home() {
 
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {carrinho.map((item) => {
-                    const precoComDesconto = getPrecoComDesconto(item.produto)
+                    const precoComDesconto = calcularPrecoComDesconto(item.produto)
                     const temDesconto = temDescontoValido(item.produto)
                     
                     return (

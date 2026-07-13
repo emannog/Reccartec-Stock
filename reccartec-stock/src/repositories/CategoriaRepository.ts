@@ -29,4 +29,12 @@ export class CategoriaRepository implements ICategoriaRepository {
   async delete(id: number): Promise<Categoria> {
     return prisma.categoria.delete({ where: { id } });
   }
+
+  async hasDependencias(id: number): Promise<boolean> {
+    const produtosAtivos = await prisma.produto.count({
+      where: { categoriaId: id, ativo: true }
+    });
+
+    return produtosAtivos > 0;
+  }
 }

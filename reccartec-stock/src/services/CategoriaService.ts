@@ -51,6 +51,13 @@ export class CategoriaService implements ICategoriaService {
     if (!categoria) {
       throw new Error('Categoria não encontrada');
     }
+
+    // Verificar se há produtos ativos nesta categoria
+    const hasDependencias = await this.repository.hasDependencias(id);
+    if (hasDependencias) {
+      throw new Error('Não é possível excluir a categoria pois existem produtos ativos associados. Desative os produtos primeiro.');
+    }
+
     return this.repository.delete(id);
   }
 }

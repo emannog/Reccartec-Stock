@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Package, Folder, Receipt, Home, TrendingUp } from 'lucide-react'
+import { Package, Folder, Receipt, Home, TrendingUp, DollarSign } from 'lucide-react'
 
 export default function Header() {
   return (
@@ -86,6 +86,13 @@ export default function Header() {
             >
               <TrendingUp className="w-4 h-4" />
               <span className="hidden sm:inline">Movimentações</span>
+            </Link>
+            <Link
+              href="/faturamento"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-white hover:bg-blue-700 transition-colors"
+            >
+              <DollarSign className="w-4 h-4" />
+              <span className="hidden sm:inline">Faturamento</span>
             </Link>
           </nav>
         </div>

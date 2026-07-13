@@ -29,6 +29,7 @@ model Produto {
   desconto    Float?         @default(0)
   tipoDesconto String?       @default("percentual") // percentual ou valor
   dataFimDesconto DateTime?
+  ativo       Boolean        @default(true)
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
   movimentacoes Movimentacao[]

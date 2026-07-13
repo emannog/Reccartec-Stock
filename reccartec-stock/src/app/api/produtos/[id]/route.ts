@@ -59,3 +59,28 @@ export async function DELETE(
     );
   }
 }
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const id = parseInt(params.id);
+    const body = await request.json();
+    
+    if (body.action === 'reativar') {
+      const produto = await produtoService.reativar(id);
+      return NextResponse.json(produto);
+    }
+    
+    return NextResponse.json(
+      { error: 'Ação inválida' },
+      { status: 400 }
+    );
+  } catch (error: any) {
+    return NextResponse.json(
+      { error: error.message || 'Erro ao reativar produto' },
+      { status: 400 }
+    );
+  }
+}
