@@ -12,7 +12,7 @@ describe('ProdutoService', () => {
     mockProdutoRepository = {
       create: jest.fn(),
       findById: jest.fn(),
-      findBySku: jest.fn(),
+      findByCodigo: jest.fn(),
       findAll: jest.fn(),
       findByCategoria: jest.fn(),
       update: jest.fn(),
@@ -33,7 +33,6 @@ describe('ProdutoService', () => {
       const data = {
         nome: 'Smartphone',
         descricao: 'Smartphone XYZ',
-        sku: 'SKU001',
         preco: 999.99,
         quantidade: 10,
         minimo: 5,
@@ -42,34 +41,27 @@ describe('ProdutoService', () => {
       const expected: Produto = {
         id: 1,
         ...data,
+        codigo: 1,
         createdAt: new Date(),
         updatedAt: new Date(),
         categoria: { id: 1, nome: 'Eletrônicos', descricao: null, createdAt: new Date(), updatedAt: new Date(), produtos: [] },
       };
-      mockProdutoRepository.findBySku.mockResolvedValue(null);
+      mockProdutoRepository.findAll.mockResolvedValue([]);
       mockProdutoRepository.create.mockResolvedValue(expected);
 
       const result = await service.create(data);
 
-      expect(mockProdutoRepository.findBySku).toHaveBeenCalledWith(data.sku);
-      expect(mockProdutoRepository.create).toHaveBeenCalledWith(data);
+      expect(mockProdutoRepository.create).toHaveBeenCalled();
       expect(result).toEqual(expected);
     });
 
-    it('deve lançar erro se SKU já existe', async () => {
-      const data = { nome: 'Teste', sku: 'SKU001', preco: 100, quantidade: 10, minimo: 5, categoriaId: 1 };
-      const existing: Produto = { id: 1, ...data, descricao: null, createdAt: new Date(), updatedAt: new Date(), categoria: {} as any };
-      mockProdutoRepository.findBySku.mockResolvedValue(existing);
-
-      await expect(service.create(data)).rejects.toThrow('Produto com este SKU já existe');
-    });
-
     it('deve lançar erro se preço é negativo', async () => {
-      const data = { nome: 'Teste', sku: 'SKU001', preco: -100, quantidade: 10, minimo: 5, categoriaId: 1 };
-      mockProdutoRepository.findBySku.mockResolvedValue(null);
+      const data = { nome: 'Teste', preco: -100, quantidade: 10, minimo: 5, categoriaId: 1 };
+      mockProdutoRepository.findAll.mockResolvedValue([]);
 
       await expect(service.create(data)).rejects.toThrow('Preço não pode ser negativo');
     });
+
   });
 
   describe('registrarEntrada', () => {
@@ -80,7 +72,7 @@ describe('ProdutoService', () => {
         id: produtoId,
         nome: 'Teste',
         descricao: null,
-        sku: 'SKU001',
+        codigo: 1,
         preco: 100,
         quantidade: 5,
         minimo: 5,
@@ -119,7 +111,7 @@ describe('ProdutoService', () => {
         id: produtoId,
         nome: 'Teste',
         descricao: null,
-        sku: 'SKU001',
+        codigo: 1,
         preco: 100,
         quantidade: 10,
         minimo: 5,
@@ -149,7 +141,7 @@ describe('ProdutoService', () => {
         id: 1,
         nome: 'Teste',
         descricao: null,
-        sku: 'SKU001',
+        codigo: 1,
         preco: 100,
         quantidade: 5,
         minimo: 5,
@@ -167,8 +159,8 @@ describe('ProdutoService', () => {
   describe('getProdutosBaixoEstoque', () => {
     it('deve retornar produtos com estoque abaixo do mínimo', async () => {
       const produtos: Produto[] = [
-        { id: 1, nome: 'Produto 1', descricao: null, sku: 'SKU001', preco: 100, quantidade: 3, minimo: 5, categoriaId: 1, createdAt: new Date(), updatedAt: new Date(), categoria: {} as any },
-        { id: 2, nome: 'Produto 2', descricao: null, sku: 'SKU002', preco: 200, quantidade: 10, minimo: 5, categoriaId: 1, createdAt: new Date(), updatedAt: new Date(), categoria: {} as any },
+        { id: 1, nome: 'Produto 1', descricao: null, codigo: 1, preco: 100, quantidade: 3, minimo: 5, categoriaId: 1, createdAt: new Date(), updatedAt: new Date(), categoria: {} as any },
+        { id: 2, nome: 'Produto 2', descricao: null, codigo: 2, preco: 200, quantidade: 10, minimo: 5, categoriaId: 1, createdAt: new Date(), updatedAt: new Date(), categoria: {} as any },
       ];
       mockProdutoRepository.findAll.mockResolvedValue(produtos);
 

@@ -6,12 +6,9 @@ import { MovimentacaoRepository } from '@/repositories/MovimentacaoRepository';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Iniciando criação de venda...');
     const vendaRepository = new VendaRepository();
     const produtoRepository = new ProdutoRepository();
     const movimentacaoRepository = new MovimentacaoRepository();
-    
-    console.log('Repositories criados:', { vendaRepository, produtoRepository, movimentacaoRepository });
     
     const vendaService = new VendaService(
       vendaRepository,
@@ -19,13 +16,9 @@ export async function POST(request: NextRequest) {
       movimentacaoRepository
     );
     
-    console.log('VendaService criado');
-    
     const body = await request.json();
-    console.log('Dados recebidos:', body);
     
     const venda = await vendaService.create(body);
-    console.log('Venda criada:', venda);
     
     return NextResponse.json(venda, { status: 201 });
   } catch (error: any) {
@@ -35,8 +28,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const inicio = searchParams.get('inicio');
+    const fim = searchParams.get('fim');
+
     const vendaRepository = new VendaRepository();
     const produtoRepository = new ProdutoRepository();
     const movimentacaoRepository = new MovimentacaoRepository();
@@ -47,7 +44,15 @@ export async function GET() {
       movimentacaoRepository
     );
     
-    const vendas = await vendaService.findAll();
+    let vendas;
+    if (inicio && fim) {
+      const dataInicio = new Date(inicio);
+      const dataFim = new Date(fim);
+      vendas = await vendaRepository.findByPeriodo(dataInicio, dataFim);
+    } else {
+      vendas = await vendaService.findAll();
+    }
+    
     return NextResponse.json(vendas);
   } catch (error) {
     console.error('Erro ao buscar vendas:', error);

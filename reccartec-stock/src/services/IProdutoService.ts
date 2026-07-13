@@ -32,4 +32,5 @@ export interface IProdutoService {
   registrarSaida(produtoId: number, quantidade: number, motivo?: string): Promise<Produto>;
   ajustarEstoque(produtoId: number, quantidade: number, motivo?: string): Promise<Produto>;
   getProdutosBaixoEstoque(): Promise<Produto[]>;
+  reativar(id: number): Promise<Produto>;
 }

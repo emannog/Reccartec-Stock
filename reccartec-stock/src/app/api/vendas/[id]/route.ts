@@ -25,7 +25,6 @@ export async function GET(
     }
     return NextResponse.json(venda);
   } catch (error) {
-    console.error('Erro ao buscar venda:', error);
     return NextResponse.json({ error: 'Erro ao buscar venda' }, { status: 500 });
   }
 }
@@ -48,7 +47,6 @@ export async function POST(
     const venda = await vendaService.cancelar(Number(params.id));
     return NextResponse.json(venda);
   } catch (error: any) {
-    console.error('Erro ao cancelar venda:', error);
     return NextResponse.json({ error: error.message || 'Erro ao cancelar venda' }, { status: 400 });
   }
 }

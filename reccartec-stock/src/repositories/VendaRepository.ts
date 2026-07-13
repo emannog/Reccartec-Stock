@@ -53,6 +53,28 @@ export class VendaRepository implements IVendaRepository {
     });
   }
 
+  async findByPeriodo(inicio: Date, fim: Date): Promise<Venda[]> {
+    return await prisma.venda.findMany({
+      where: {
+        createdAt: {
+          gte: inicio,
+          lt: fim
+        },
+        status: 'CONCLUIDA'
+      },
+      include: {
+        itens: {
+          include: {
+            produto: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+  }
+
   async update(id: number, data: Partial<Venda>): Promise<Venda> {
     return await prisma.venda.update({
       where: { id },

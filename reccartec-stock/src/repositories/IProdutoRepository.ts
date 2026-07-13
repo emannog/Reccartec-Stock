@@ -16,6 +16,7 @@ export interface IProdutoRepository {
   findById(id: number): Promise<Produto | null>;
   findByCodigo(codigo: number): Promise<Produto | null>;
   findAll(): Promise<Produto[]>;
+  findAllIncludingInactive(): Promise<Produto[]>;
   findByCategoria(categoriaId: number): Promise<Produto[]>;
   update(id: number, data: Partial<{
     nome: string;
@@ -30,4 +31,6 @@ export interface IProdutoRepository {
   }>): Promise<Produto>;
   delete(id: number): Promise<Produto>;
   updateQuantidade(id: number, quantidade: number): Promise<Produto>;
+  hasDependencias(id: number): Promise<boolean>;
+  reativar(id: number): Promise<Produto>;
 }

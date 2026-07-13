@@ -7,4 +7,5 @@ export interface ICategoriaRepository {
   findAll(): Promise<Categoria[]>;
   update(id: number, data: { nome?: string; descricao?: string }): Promise<Categoria>;
   delete(id: number): Promise<Categoria>;
+  hasDependencias(id: number): Promise<boolean>;
 }

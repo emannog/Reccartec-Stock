@@ -40,8 +40,8 @@ export class ProdutoService implements IProdutoService {
       throw new Error('Estoque mínimo não pode ser negativo');
     }
 
-    // Gerar próximo código automaticamente
-    const produtos = await this.produtoRepository.findAll();
+    // Gerar próximo código automaticamente (considerando produtos inativos)
+    const produtos = await this.produtoRepository.findAllIncludingInactive();
     const maxCodigo = produtos.length > 0 ? Math.max(...produtos.map((p: any) => p.codigo)) : 0;
     const nextCodigo = maxCodigo + 1;
 
@@ -100,6 +100,8 @@ export class ProdutoService implements IProdutoService {
     if (!produto) {
       throw new Error('Produto não encontrado');
     }
+
+    // Soft delete - apenas desativa o produto
     return this.produtoRepository.delete(id);
   }
 
@@ -172,5 +174,14 @@ export class ProdutoService implements IProdutoService {
   async getProdutosBaixoEstoque(): Promise<Produto[]> {
     const produtos = await this.produtoRepository.findAll();
     return produtos.filter(p => p.quantidade <= p.minimo);
+  }
+
+  async reativar(id: number): Promise<Produto> {
+    const produto = await this.produtoRepository.findById(id);
+    if (!produto) {
+      throw new Error('Produto não encontrado');
+    }
+
+    return this.produtoRepository.reativar(id);
   }
 }
