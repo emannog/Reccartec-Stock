@@ -3,6 +3,8 @@ import { ProdutoService } from '@/services/ProdutoService';
 
 const produtoService = new ProdutoService();
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;

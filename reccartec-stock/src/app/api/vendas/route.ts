@@ -4,6 +4,8 @@ import { VendaRepository } from '@/repositories/VendaRepository';
 import { ProdutoRepository } from '@/repositories/ProdutoRepository';
 import { MovimentacaoRepository } from '@/repositories/MovimentacaoRepository';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request: NextRequest) {
   try {
     const vendaRepository = new VendaRepository();
