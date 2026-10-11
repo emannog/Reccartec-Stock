@@ -11,7 +11,8 @@ Este guia fornece instruções detalhadas para instalar, configurar e utilizar o
 5. [Uso do Sistema](#uso-do-sistema)
 6. [Testes](#testes)
 7. [Deploy](#deploy)
-8. [Solução de Problemas](#solução-de-problemas)
+8. [PWA - Instalação como App](#pwa---instalação-como-app)
+9. [Solução de Problemas](#solução-de-problemas)
 
 ## Pré-requisitos
 
@@ -89,8 +90,12 @@ cp .env.example .env
 O arquivo `.env` deve conter:
 
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://postgres:password@db.supabase.co:5432/postgres"
+NEXT_PUBLIC_SUPABASE_URL="https://your-project.supabase.co"
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="your-anon-key"
 ```
+
+**Nota:** Substitua com suas credenciais do Supabase. Obtenha as chaves no painel do Supabase em Settings → API. Não commitar o arquivo `.env` (já está no .gitignore)
 
 **Nota:** Não commitar o arquivo `.env` (já está no .gitignore)
 
@@ -98,7 +103,15 @@ DATABASE_URL="file:./dev.db"
 
 ### Passo 1: Configurar o Banco de Dados
 
-O projeto usa Prisma ORM com SQLite para desenvolvimento.
+O projeto usa Prisma ORM com PostgreSQL (Supabase).
+
+#### Pré-requisitos do Banco de Dados
+
+Antes de configurar, você precisa ter um banco PostgreSQL configurado. O projeto usa Supabase como provedor de banco de dados.
+
+1. Crie uma conta no Supabase: https://supabase.com
+2. Crie um novo projeto
+3. Copie a string de conexão (Database URL) das configurações do projeto
 
 #### Gerar Cliente Prisma
 
@@ -120,9 +133,9 @@ npx prisma migrate dev --name init
 ```
 
 Este comando:
-- Cria o banco de dados SQLite
+- Conecta ao banco PostgreSQL
 - Executa as migrações
-- Cria as tabelas (Categoria, Produto, Movimentacao)
+- Cria as tabelas (Categoria, Produto, Movimentacao, Venda, ItemVenda)
 
 **Saída esperada:**
 ```
@@ -330,11 +343,8 @@ Isso abrirá um navegador e executará os testes de ponta a ponta.
    - Importe seu repositório do Git
 
 3. **Configurar Variáveis de Ambiente**
-   - Adicione `DATABASE_URL`
-   - Para produção, use PostgreSQL:
-     ```
-     DATABASE_URL="postgresql://user:password@host:port/database"
-     ```
+   - Adicione `DATABASE_URL` com sua string de conexão do Supabase
+   - Use o mesmo formato do seu `.env` local
 
 4. **Deploy Automático**
    - O Vercel fará deploy automático
@@ -368,6 +378,60 @@ Isso abrirá um navegador e executará os testes de ponta a ponta.
 6. Execute migrações
 7. Configure PM2 para gerenciar o processo
 8. Configure Nginx como reverse proxy
+
+## PWA - Instalação como App
+
+O sistema é configurado como **Progressive Web App (PWA)**, permitindo instalação como aplicativo em desktop e dispositivos móveis.
+
+### Como Instalar
+
+#### Desktop (Chrome/Edge)
+
+1. Acesse o site no navegador
+2. Clique no ícone de instalação na barra de endereço (ou pressione `Ctrl+Shift+I` → Application → Manifest)
+3. Clique em "Instalar Reccartec Stock"
+4. O app será instalado e pode ser acessado pelo menu iniciar
+
+#### Android (Chrome)
+
+1. Acesse o site no Chrome
+2. Será exibido um banner "Adicionar à tela inicial"
+3. Clique em "Adicionar"
+4. O app será instalado e aparecerá na tela inicial
+
+#### iOS (Safari)
+
+1. Acesse o site no Safari
+2. Clique no botão de compartilhar (ícone de quadrado com seta)
+3. Role para baixo e clique em "Adicionar à Tela de Início"
+4. Clique em "Adicionar"
+
+### Funcionalidades PWA
+
+- **Offline:** O app funciona mesmo sem internet (service worker)
+- **Tela Cheia:** Abre em modo tela cheia como app nativo
+- **Ícone:** Ícone personalizado na tela inicial
+- **Atualização Automática:** O service worker atualiza o app em segundo plano
+
+### Testar PWA Localmente
+
+Para testar as funcionalidades PWA localmente:
+
+```bash
+# Build para produção
+npm run build
+
+# Iniciar servidor de produção
+npm start
+```
+
+Acesse `http://localhost:3000` e siga as instruções de instalação acima.
+
+### Notas Importantes
+
+- PWA só funciona em modo produção (HTTPS ou localhost)
+- O serviço worker é desabilitado em desenvolvimento
+- Atualizações do app requerem build e deploy novos
 
 ## Solução de Problemas
 
@@ -455,11 +519,11 @@ npm test -- CategoriaService.test.ts
 
 ### Produção
 
-1. **Use PostgreSQL** em vez de SQLite
-2. **Configure backups** do banco de dados
-3. **Monitore logs** regularmente
-4. **Use HTTPS** para segurança
-5. **Configure rate limiting** para proteger a API
+1. **Configure backups** do banco de dados no Supabase
+2. **Monitore logs** regularmente
+3. **Use HTTPS** para segurança
+4. **Configure rate limiting** para proteger a API
+5. **Monitore uso** do banco de dados no painel do Supabase
 
 ### Manutenção
 
